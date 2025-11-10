@@ -13,15 +13,16 @@ st.set_page_config(
 st.sidebar.title("🧭 Navigasi SINAR")
 role = st.sidebar.radio("Pilih Mode", ["Mitra (Peminjam)", "Amartha (Admin)"])
 
-# --- Load Data Mock ---
+# Dapatkan lokasi folder app.py
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+
 @st.cache_data
 def load_data():
-    customers = pd.read_csv("data/mock_customers.csv")
-    loans = pd.read_csv("data/mock_loans.csv")
-    repayments = pd.read_csv("data/mock_repayments.csv")
+    data_dir = os.path.join(APP_DIR, "data")
+    customers = pd.read_csv(os.path.join(data_dir, "mock_customers.csv"))
+    loans = pd.read_csv(os.path.join(data_dir, "mock_loans.csv"))
+    repayments = pd.read_csv(os.path.join(data_dir, "mock_repayments.csv"))
     return customers, loans, repayments
-
-customers, loans, repayments = load_data()
 
 # ========================================
 # HALAMAN 1: MITRA (PEMINJAM)
