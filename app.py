@@ -9,83 +9,116 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- Dapatkan path absolut ke folder app.py ---
+# --- Path ke folder app.py (aman di lokal & cloud) ---
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# --- Load Data dengan Error Handling ---
-@st.cache_resource
+# --- Fungsi Load Data ---
+@st.cache_data
 def load_data():
-    try:
-        data_dir = os.path.join(APP_DIR, "data")
-        customers = pd.read_csv(os.path.join(data_dir, "mock_customers.csv"))
-        loans = pd.read_csv(os.path.join(data_dir, "mock_loans.csv"))
-        repayments = pd.read_csv(os.path.join(data_dir, "mock_repayments.csv"))
-        return customers, loans, repayments
-    except Exception as e:
-        st.error(f"⚠️ Gagal memuat data: {str(e)}")
-        # Kembalikan data dummy jika gagal
-        customers = pd.DataFrame({"mitra_id": ["M001"], "nama": ["Ibu Contoh"], "desa": ["Desa Demo"], "kelompok": ["Kelompok X"]})
-        loans = pd.DataFrame({"loan_id": ["L001"], "mitra_id": ["M001"], "jumlah_pinjaman": [1000000], "status": ["lancar"]})
-        repayments = pd.DataFrame({"repayment_id": ["R001"], "loan_id": ["L001"], "status": ["lunas"]})
-        return customers, loans, repayments
+    data_dir = os.path.join(APP_DIR, "data")
+    customers = pd.read_csv(os.path.join(data_dir, "mock_customers.csv"))
+    loans = pd.read_csv(os.path.join(data_dir, "mock_loans.csv"))
+    repayments = pd.read_csv(os.path.join(data_dir, "mock_repayments.csv"))
+    return customers, loans, repayments
 
-# --- Sidebar ---
-st.sidebar.title("🧭 Navigasi SINAR")
+# --- Load data ---
+try:
+    customers, loans, repayments = load_data()
+except Exception as e:
+    st.error(f"❌ Gagal memuat data: {e}")
+    st.stop()
+
+# --- Sidebar Navigasi ---
+st.sidebar.title("🧭 SINAR")
 role = st.sidebar.radio("Pilih Mode", ["Mitra (Peminjam)", "Amartha (Admin)"])
-
-# --- Load Data ---
-customers, loans, repayments = load_data()
 
 # ========================================
 # HALAMAN: MITRA
 # ========================================
 if role == "Mitra (Peminjam)":
-    st.title("🌸 Selamat Datang, Mitra Amartha!")
-    st.markdown("SINAR hadir untuk mendukung Ibu dengan edukasi, konsultasi, dan saluran resmi saat mengalami kendala.")
+    st.title("🌸 Halo, Mitra Amartha!")
+    st.markdown("SINAR siap membantu Ibu dengan edukasi, konsultasi, dan saluran resmi saat ada kendala.")
 
-    user_msg = st.text_input("Tulis pertanyaan Ibu di sini:")
+    # Chatbot sederhana
+    st.subheader("💬 Tanya Ayu (Asisten Virtual)")
+    user_msg = st.text_input("Apa yang ingin Ibu tanyakan?")
     if user_msg:
-        response = "Terima kasih, Bu! Jika Ibu mengalami kendala, jangan sungkan ajukan 'Lapor Kendala' di bawah. 💕"
+        msg_lower = user_msg.lower()
+        if "telat" in msg_lower or "lambat" in msg_lower:
+            response = "Tenang, Bu. Jika Ibu telat karena kendala, segera ajukan 'Lapor Kendala' di bawah. Selama ditinjau, Ibu tidak akan dihubungi penagih."
+        elif "perpanjang" in msg_lower or "keringanan" in msg_lower:
+            response = "Ibu bisa ajukan perpanjangan lewat 'Lapor Kendala'. Unggah foto bukti (misal: sawah gagal panen), lalu tim Amartha akan bantu."
+        else:
+            response = "Terima kasih, Bu! 💕 Jika ada kendala, jangan sungkan ajukan 'Lapor Kendala'."
         st.info(response)
 
+    # Fitur Lapor Kendala
     st.markdown("---")
-    st.subheader("📌 Lapor Kendala – Ajukan Keringanan Resmi")
-    with st.form("lapor_kendala"):
-        jenis = st.selectbox("Jenis Kendala", ["Gagal panen", "Sakit", "Usaha sepi", "Lainnya"])
+    st.subheader("📌 Lapor Kendala – Ajukan Keringanan")
+    with st.form("lapor_form"):
+        jenis = st.selectbox("Jenis Kendala", [
+            "Gagal panen / gagal usaha",
+            "Bencana alam",
+            "Sakit atau kecelakaan",
+            "Usaha sepi",
+            "Lainnya"
+        ])
+        keterangan = st.text_area("Ceritakan kondisi Ibu (opsional):")
         bukti = st.file_uploader("Unggah foto bukti:", type=["jpg", "png"])
-        submit = st.form_submit_button("Ajukan")
+        submit = st.form_submit_button("Ajukan Permohonan")
+
     if submit:
-        st.success("✅ Permohonan Ibu telah diajukan! Tim Amartha akan segera meninjau.")
+        st.success("✅ Permohonan Ibu telah diajukan!\n\n"
+                   "Tim Amartha akan segera meninjau. **Selama proses ini, Ibu tidak akan dihubungi penagih.**")
+        if bukti:
+            st.image(bukti, caption="Bukti yang diunggah", use_container_width=True)
 
 # ========================================
 # HALAMAN: AMARTHA (ADMIN)
 # ========================================
 else:
     st.title("🛡️ Dashboard SINAR – Analitik Risiko & Responsif")
-    st.markdown("Dashboard ini membantu tim Amartha mendeteksi dini risiko dan merespons kendala mitra.")
+    st.markdown("Mendeteksi risiko dini & merespons kendala mitra secara proaktif.")
 
-    # Cek apakah kolom yang dibutuhkan ada
+    # Gabungkan data — pastikan pakai 'loans' (dengan 's')!
     try:
-        if "mitra_id" not in loans.columns or "mitra_id" not in customers.columns:
-            st.warning("⚠️ Kolom 'mitra_id' tidak ditemukan di data. Gunakan data dummy.")
-            loans = pd.DataFrame({"mitra_id": ["M001"], "jumlah_pinjaman": [1000000], "status": ["lancar"]})
-            customers = pd.DataFrame({"mitra_id": ["M001"], "nama": ["Ibu Demo"], "desa": ["Desa X"], "kelompok": ["K1"]})
-
         merged = loans.merge(customers, on="mitra_id", how="left")
-        merged["risiko"] = merged["status"].apply(
-            lambda x: "Rendah" if x == "lancar" else "Sedang" if x in ["terlambat", "belum_bayar"] else "Tinggi"
-        )
-
-        st.subheader("🚨 Mitra Perlu Perhatian")
-        high_risk = merged[merged["risiko"] != "Rendah"]
-        if not high_risk.empty:
-            st.dataframe(high_risk[["nama", "desa", "jumlah_pinjaman", "status", "risiko"]], hide_index=True)
-        else:
-            st.info("Tidak ada mitra berisiko tinggi.")
-
-        st.subheader("📊 Performa Kelompok (Cohort)")
-        st.bar_chart({"Kelompok K1": 95, "Kelompok K2": 88}, y_label="Kelancaran (%)")
-
+        # Tambahkan kolom risiko berdasarkan status pinjaman
+        def tentukan_risiko(status):
+            if status == "lancar":
+                return "Rendah"
+            elif status in ["terlambat", "belum_bayar"]:
+                return "Sedang"
+            else:
+                return "Tinggi"
+        merged["risiko"] = merged["status"].apply(tentukan_risiko)
+    except KeyError as e:
+        st.error(f"❌ Kolom tidak ditemukan di data: {e}")
+        st.write("Pastikan file CSV memiliki kolom: `mitra_id`, `status`")
+        st.stop()
     except Exception as e:
-        st.error(f"❌ Error saat memproses data dashboard: {str(e)}")
-        st.write("Pastikan file CSV memiliki kolom: `mitra_id`, `status`, `nama`, `desa`, `jumlah_pinjaman`.")
+        st.error(f"❌ Error saat menggabung data: {e}")
+        st.stop()
+
+    # Tampilkan mitra berisiko
+    st.subheader("🚨 Mitra Perlu Perhatian")
+    high_risk = merged[merged["risiko"] != "Rendah"]
+    if not high_risk.empty:
+        st.dataframe(
+            high_risk[["nama", "desa", "jumlah_pinjaman", "status", "risiko"]],
+            hide_index=True
+        )
+    else:
+        st.info("Tidak ada mitra berisiko tinggi saat ini.")
+
+    # Grafik cohort mock
+    st.subheader("📊 Performa Kelompok (Cohort)")
+    st.bar_chart({
+        "Kelompok A": 96,
+        "Kelompok B": 89,
+        "Kelompok C": 93
+    }, y_label="Tingkat Kelancaran (%)", color="#4CAF50")
+
+    # Permohonan kendala (mock)
+    st.subheader("📥 Permohonan Kendala Terbaru")
+    st.warning("Contoh permohonan:\n- Ibu Siti (Kelompok A): Gagal panen → perlu verifikasi\n- Ibu Rina (Kelompok B): Sakit → ajukan penundaan")
