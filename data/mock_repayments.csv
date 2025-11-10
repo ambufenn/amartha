@@ -1,0 +1,4 @@
+repayment_id,loan_id,tgl_jatuh_tempo,tgl_dibayar,status
+R001,L001,2025-08-30,2025-08-29,lunas
+R002,L001,2025-09-29,2025-10-05,terlambat
+R003,L002,2025-10-15,,belum_bayar
