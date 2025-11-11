@@ -4,7 +4,7 @@ import os
 
 # --- Konfigurasi Halaman ---
 st.set_page_config(
-    page_title="SINAR - Amartha Hackathon",
+    page_title="SERENADE - Amartha Hackathon",
     layout="centered",
     initial_sidebar_state="expanded"
 )
