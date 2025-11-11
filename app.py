@@ -69,7 +69,7 @@ if role == "Mitra (Peminjam)":
 
     if submit:
         st.success("✅ Permohonan Ibu telah diajukan!\n\n"
-                   "Tim Amartha akan segera meninjau. **Selama proses ini, Ibu tidak akan dihubungi penagih.**")
+                   "Sawah Ibu betul terdeteksi Kering/gagal panen, maka Tim Amartha akan segera meninjau. **Selama proses ini, Ibu tidak akan dihubungi penagih.**")
         if bukti:
             st.image(bukti, caption="Bukti yang diunggah", use_container_width=True)
 
